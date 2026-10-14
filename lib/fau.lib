@@ -1,0 +1,81 @@
+import("stdfaust.lib");
+
+// seconds since the start of the file
+// "warm start" preroll taken care of
+now = ba.time / ma.SR - nentry("fau_preroll", 0, 0, 60, 0);
+
+// envelope for a piece of length d: fade in over a seconds, out over b seconds
+fadeEnv(d, a, b) = max(0, min(1, now / max(a, ma.EPSILON))) * min(1, max(0, d - now) / max(b, ma.EPSILON));
+
+// stereo fade
+fade(d, a, b) = _ * env, _ * env
+with {
+  env = fadeEnv(d, a, b);
+};
+
+// linear move from x0 (at time t0) to x1 (at time t1), held outside [t0, t1]
+line(t0, t1, x0, x1) = x0 + (x1 - x0) * min(1, max(0, (now - t0) / max(t1 - t0, ma.EPSILON)));
+
+// model stereo coherence in low frequencies:
+//   * sending independent white noises to L/R channels makes them way too wide
+//   * but i see that low-frequencies are correlated, so we must replicate that
+//   * so first `+,-` converts to mid/side like in `ef.stereo width`
+//   * then we boost mid and duck side making their correlation to be r
+//   * and finally convert back into L/R channels
+//
+//   chaining lowcorrs:
+//     we get correlations in bands from plots
+//     but in chains of lowcorr filters low frequencies overlap
+//
+//     so here then, the correlations combine "through tanh", i.e.
+//     correlation on the overlap low-freq region is (r1 + r2)/(1 + r1 r2)
+//
+//     so to compute what to put in lowcorr from the graph,
+//        get values on plateaus -> atanh them -> tanh the differences
+lowcorr(f, r) = _,_ <: +,-
+    : fi.svf.ls(f, 0.7, 10*log10(1 + r)), fi.svf.ls(f, 0.7, 10*log10(1 - r))
+    <: +,- : /(2), /(2);
+
+
+// set of sine tones at given frequencies and given (decibel) gains
+// (you pass the "csv namespace" here)
+toneSet(tones) = par(i, ba.count(tones.freq), tone(i)) :> _, _
+with {
+  tone(i) = os.osc(ba.take(i + 1, tones.freq)) <: *(g(tones.gainL, i)), *(g(tones.gainR, i));
+  g(x, i) = ba.take(i + 1, x) : ba.db2linear;
+};
+
+// as above but take the `phase` column for phase offset
+phasedToneSet(tones) = par(i, ba.count(tones.freq), tone(i)) :> _, _
+with {
+  f(i) = ba.take(i+1, tones.freq);
+  ph(i) = ba.take(i+1, tones.phase);
+  g(x, i) = ba.take(i + 1, x) : ba.db2linear;
+  tone(i) = os.osc(f(i)) * g(tones.gainL, i),
+            os.oscp(f(i), ph(i))*(g(tones.gainR, i));
+};
+
+
+// set of high-Q filters rather than sine tones
+// (you pass the "csv namespace" here)
+filterToneSet(filterTones, N, Noffset) = par(i, ba.count(filterTones.freq), tone(i)) :> _, _
+with {
+  tone(i) = no.noises(N + Noffset, i) : fi.svf.bp(
+              ba.take(i+1, filterTones.freq),
+              ba.take(i+1, filterTones.q))
+              / ba.take(i+1, filterTones.q)
+              <: _ * ba.db2linear(ba.take(i+1, filterTones.gainL)),
+                 _ * ba.db2linear(ba.take(i+1, filterTones.gainR));
+};
+
+
+// stereo bank of peaking EQ filters implemented as
+// SVF Bell filters (you pass the "csv namespace" here)
+// reads `freq`, `q`, `gainL`, and `gainR`
+bellBank(bells) = bank(bells.gainL), bank(bells.gainR)
+with {
+  bank(gains) = seq(i, ba.count(bells.freq), fi.svf.bell(
+                      ba.take(i+1, bells.freq),
+                      ba.take(i+1, bells.q),
+                      ba.take(i+1, gains)));
+};

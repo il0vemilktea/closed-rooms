@@ -1,0 +1,37 @@
+cabal-version: 3.0
+name:          fau
+version:       0.1.0.0
+synopsis:      render Faust pieces to wav
+license:       MIT
+build-type:    Simple
+extra-source-files: arch/fau.cpp
+
+common shared
+  default-language: GHC2021
+  ghc-options:      -Wall
+
+library
+  import:          shared
+  hs-source-dirs:  src
+  exposed-modules:
+    Fau.Compile, Fau.Csv, Fau.Params, Fau.Play, Fau.Project, Fau.Render,
+    Fau.Rewrite, Fau.Watch
+  build-depends:
+    async, base, bytestring, containers, cryptohash-sha256, directory,
+    file-embed, filepath, fsnotify, megaparsec, text, transformers,
+    typed-process
+
+executable fau
+  import:         shared
+  main-is:        Main.hs
+  hs-source-dirs: app
+  build-depends:
+    base, bytestring, directory, fau, filepath, optparse-applicative, text,
+    typed-process, unix
+
+test-suite spec
+  import:         shared
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  hs-source-dirs: test
+  build-depends:  base, fau, hspec, text
