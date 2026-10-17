@@ -1,6 +1,6 @@
 # Erika Milkea - **no title as of 5 october 1986 17 dead**
 
-Album link: TBA
+Album link: [Bandcamp](https://erikamilktea.bandcamp.com/album/closed-rooms); [Soundcloud](https://soundcloud.com/erika-milktea/sets/closed-rooms)
 Post link: TBA
 
 Okay if you reached here you clearly are interested in this more than just as a substack bit.
