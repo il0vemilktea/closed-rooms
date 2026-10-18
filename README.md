@@ -1,7 +1,10 @@
-# Erika Milkea - **no title as of 5 october 1986 17 dead**
+# erika milkea - _closed rooms_
 
-Album link: [Bandcamp](https://erikamilktea.bandcamp.com/album/closed-rooms); [Soundcloud](https://soundcloud.com/erika-milktea/sets/closed-rooms)
-Post link: TBA
+**Album links**: [Bandcamp](https://erikamilktea.bandcamp.com/album/closed-rooms); [Soundcloud](https://soundcloud.com/erika-milktea/sets/closed-rooms).
+
+[**Post link**](https://erikamilktea.substack.com/p/stanford-laptop-orchestra-a-hit-piece).
+
+[**Github mirror**](https://github.com/il0vemilktea/closed-rooms/blob) (for web-rendered notebooks).
 
 Okay if you reached here you clearly are interested in this more than just as a substack bit.
 
